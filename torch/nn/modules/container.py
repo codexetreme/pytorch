@@ -88,17 +88,42 @@ class Sequential(Module):
         return keys
 
     # need to add code, just a starter
-    def append(self):
+    def append(self,layer):
+        self.insert(len(self), layer)
         pass
     
-    def extend(self):
+    def extend(self,sequential):
+        for layer in sequential:
+            self.append(layer)
         pass
     
-    def insert(self):
+    def insert(self,i,layer):
+        if not callable(layer):
+            raise ValueError(
+                'All elements of the argument should be callable. But '
+                'given {} is not callable.'.format(layer))
+
+        self._layers.insert(i, layer)
+        if isinstance(layer, _link.Link):
+            if i == 0:
+                self._children.insert(0, layer)
+            else:
+                if i < 0:
+                    i = len(self._layers) + i
+                last_link_pos = 0
+                for j in range(i - 1, -1, -1):
+                    # The last link before the given position
+                    if isinstance(self._layers[j], _link.Link):
+                        last_link_pos = j
+                self._children.insert(last_link_pos + 1, layer)
+            for i, layer in enumerate(self._children):
+                layer.name = str(i)
         pass
 
-    def pop(self):
-        pass
+    def pop(self,i=-1):
+        layer = self._layers[i]
+        del self[i]
+        return layer
     
     def forward(self, input):
         for module in self._modules.values():
